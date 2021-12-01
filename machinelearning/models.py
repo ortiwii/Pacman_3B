@@ -1,3 +1,5 @@
+import sys
+
 import nn
 
 class PerceptronModel(object):
@@ -70,15 +72,19 @@ class RegressionModel(object):
     """
     def __init__(self):
         # Initialize your model parameters here
-        # For example:
-        # self.batch_size = 20
-        # self.w0 = nn.Parameter(1, 5)
-        # self.b0 = nn.Parameter(1, 5)
-        # self.w1 = nn.Parameter(5, 1)
-        # self.b1 = nn.Parameter(1, 1)
-        # self.lr = -0.01
-        #
+
         "*** YOUR CODE HERE ***"
+
+        self.batch_size = 10
+        self.w0 = nn.Parameter(1, 30)
+        self.b0 = nn.Parameter(1, 30)
+        self.w1 = nn.Parameter(30, 1)
+        self.b1 = nn.Parameter(1, 1)
+
+        self.p1 = nn.Parameter(10, 1)
+        self.p2 = nn.Parameter(1, 10)
+
+        self.lr = -0.008
 
     def run(self, x):
         """
@@ -91,6 +97,16 @@ class RegressionModel(object):
             Como es un modelo de regresion, cada valor y tambien tendra un unico valor
         """
         "*** YOUR CODE HERE ***"
+
+        a = nn.Linear(x, self.w0)
+        ba = nn.AddBias(a, self.b0)
+        r1 = nn.ReLU(ba)
+
+        b = nn.Linear(r1, self.w1)
+        bb = nn.AddBias(b, self.b1)
+        # r2 = nn.ReLU(bb)
+
+        return bb
 
     def get_loss(self, x, y):
         """
@@ -106,24 +122,35 @@ class RegressionModel(object):
         """
         "*** YOUR CODE HERE ***"
 
+        return nn.SquareLoss(self.run(x), y)
 
     def train(self, dataset):
         """
         Trains the model.
         
         """
-        
-        batch_size = self.batch_size
+        parametros = [self.w0, self.b0, self.w1, self.b1, self.p1, self.p2]
         total_loss = 100000
-        while total_loss > 0.02:
+        while total_loss > 0.02: # Antes 0.02
+
             #ITERAR SOBRE EL TRAIN EN LOTES MARCADOS POR EL BATCH SIZE COMO HABEIS HECHO EN LOS OTROS EJERCICIOS
             #ACTUALIZAR LOS PESOS EN BASE AL ERROR loss = self.get_loss(x, y) QUE RECORDAD QUE GENERA
             #UNA FUNCION DE LA LA CUAL SE  PUEDE CALCULAR LA DERIVADA (GRADIENTE)
 
             "*** YOUR CODE HERE ***"
 
-            total_loss = nn.as_scalar(self.get_loss(nn.Constant(dataset.x), nn.Constant(dataset.y)))#AQUI SE CALCULA OTRA VEZ EL ERROR PERO SOBRE TODO EL TRAIN A LA VEZ (CUIDADO!! NO ES LO MISMO el x de antes QUE dataset.x)
-            
+
+            for x,y in dataset.iterate_once(self.batch_size):
+                perdida = self.get_loss(x, y)
+                # perdidaEscalar = nn.as_scalar(perdida)
+                gradPerdida = nn.gradients(perdida, parametros)
+                for i in range (0, len(gradPerdida)):
+                    parAct = parametros[i]
+                    parAct.update(gradPerdida[i], self.lr)
+
+            total_loss = nn.as_scalar(self.get_loss(nn.Constant(dataset.x), nn.Constant(dataset.y)))
+                  # AQUI SE CALCULA OTRA VEZ EL ERROR PERO SOBRE TOoDO EL TRAIN A LA VEZ (CUIDADO!! NO ES LO MISMO el x de antes QUE dataset.x)
+
 class DigitClassificationModel(object):
     """
     A model for handwritten digit classification using the MNIST dataset.
