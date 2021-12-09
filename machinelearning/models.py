@@ -1,5 +1,3 @@
-import sys
-
 import nn
 
 class PerceptronModel(object):
@@ -139,8 +137,7 @@ class RegressionModel(object):
 
             "*** YOUR CODE HERE ***"
 
-
-            for x,y in dataset.iterate_once(self.batch_size):
+            for x, y in dataset.iterate_once(self.batch_size):
                 perdida = self.get_loss(x, y)
                 # perdidaEscalar = nn.as_scalar(perdida)
                 gradPerdida = nn.gradients(perdida, parametros)
@@ -149,7 +146,7 @@ class RegressionModel(object):
                     parAct.update(gradPerdida[i], self.lr)
 
             total_loss = nn.as_scalar(self.get_loss(nn.Constant(dataset.x), nn.Constant(dataset.y)))
-                  # AQUI SE CALCULA OTRA VEZ EL ERROR PERO SOBRE TOoDO EL TRAIN A LA VEZ (CUIDADO!! NO ES LO MISMO el x de antes QUE dataset.x)
+            # AQUI SE CALCULA OTRA VEZ EL ERROR PERO SOBRE TOoDO EL TRAIN A LA VEZ (CUIDADO!! NO ES LO MISMO el x de antes QUE dataset.x)
 
 class DigitClassificationModel(object):
     """
@@ -170,8 +167,22 @@ class DigitClassificationModel(object):
         # TEN ENCUENTA QUE TIENES 10 CLASES, ASI QUE LA ULTIMA CAPA TENDRA UNA SALIDA DE 10 VALORES,
         # UN VALOR POR CADA CLASE
 
-        output_size = 10 # TAMANO EQUIVALENTE AL NUMERO DE CLASES DADO QUE QUIERES OBTENER 10 "COSENOS"
+        self.batch_size = 10 # TAMANO EQUIVALENTE AL NUMERO DE CLASES DADO QUE QUIERES OBTENER 10 "COSENOS"
         "*** YOUR CODE HERE ***"
+        self.learning_rate = -0.05
+
+        self.w0 = nn.Parameter(784, 250)
+        self.b0 = nn.Parameter(1, 250)
+
+        self.w1 = nn.Parameter(250, 100)
+        self.b1 = nn.Parameter(1, 100)
+
+        self.w2 = nn.Parameter(100, 10)
+        self.b2 = nn.Parameter(1, 10)
+
+        self.lista = [self.w0, self.b0, self.w1, self.b1, self.w2, self.b2]
+
+
 
     def run(self, x):
         """
@@ -189,6 +200,17 @@ class DigitClassificationModel(object):
             output_size = 10 # TAMANO EQUIVALENTE AL NUMERO DE CLASES DADO QUE QUIERES OBTENER 10 "COSENOS"
         """
         "*** YOUR CODE HERE ***"
+        a = nn.Linear(x, self.w0)
+        aa = nn.AddBias(a, self.b0)
+        r1 = nn.ReLU(aa)
+
+        b = nn.Linear(r1, self.w1)
+        bb = nn.AddBias(b, self.b1)
+        r2 = nn.ReLU(bb)
+
+        c = nn.Linear(r2, self.w2)
+        cc = nn.AddBias(c, self.b2)
+        return cc
 
     def get_loss(self, x, y):
         """
@@ -227,6 +249,15 @@ class DigitClassificationModel(object):
             #ACTUALIZAR LOS PESOS EN BASE AL ERROR loss = self.get_loss(x, y) QUE RECORDAD QUE GENERA
             #UNA FUNCION DE LA LA CUAL SE  PUEDE CALCULAR LA DERIVADA (GRADIENTE)
             "*** YOUR CODE HERE ***"
+
+            for x, y in dataset.iterate_once(30):
+                gradW0, gradB0, gradW1, gradB1, gradW2, gradB2 = nn.gradients(self.get_loss(x, y), self.lista)
+                self.w0.update(gradW0, self.learning_rate)
+                self.b0.update(gradB0, self.learning_rate)
+                self.w1.update(gradW1, self.learning_rate)
+                self.b1.update(gradB1, self.learning_rate)
+                self.w2.update(gradW2, self.learning_rate)
+                self.b2.update(gradB2, self.learning_rate)
 
 class LanguageIDModel(object):
     """
